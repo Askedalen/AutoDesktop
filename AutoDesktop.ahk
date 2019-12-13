@@ -17,98 +17,63 @@ normalSize(title) {
     } else if (InStr(title, "GitHub")) {
         isNormal := true
     }
+    
     return isNormal
 }
-
-getScreenWidth() {
-    SysGet, workArea, MonitorWorkArea
-    return workAreaRight
-}
-
-getScreenHeight() {
-    SysGet, workArea, MonitorWorkArea
-    return workAreaBottom
-}
-
-getWindowInfo() {
+^b::
     WinGetTitle, title, A
     WinGetClass, winClass, A
     MsgBox, The title is %title%, the winClass is %winClass%
     return
-}
-
-middleScreenPos() {
-    WinGetTitle, title, A
-    xPos := getScreenWidth() / 4
-    xSize := getScreenWidth() / 2
-    ySize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        xSize += 16
-        ySize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %xSize%, %ySize%
-    return
-}
-
-leftThirdPos() {
-    WinGetTitle, title, A 
-    xPos := 0
-    x3rdSize := (getScreenWidth() - 1400) / 2
-    y3rdSize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        x3rdSize += 16
-        y3rdSize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %x3rdSize%, %y3rdSize%
-    return
-}
-
-middleThirdPos() {
-    WinGetTitle, title, A 
-    xPos := (getScreenWidth() - 1400) / 2
-    x3rdSize := 1400
-    y3rdSize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        x3rdSize += 16
-        y3rdSize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %x3rdSize%, %y3rdSize%
-    return
-}
-
-rightThirdPos() {
-    WinGetTitle, title, A 
-    xPos := getScreenWidth() - ((getScreenWidth() - 1400) / 2)
-    x3rdSize := (getScreenWidth() - 1400) / 2
-    y3rdSize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        x3rdSize += 16
-        y3rdSize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %x3rdSize%, %y3rdSize%
-    return
-}
-
-^b::
-getWindowInfo()
-return
 
 ^f::
-middleScreenPos()
-return
+    WinGetTitle, title, A
+    XPos := screenWidth / 4
+    XSize := screenWidth / 2
+    YSize := screenHeight
+    If (!normalSize(title)) {
+        XPos -= 8
+        XSize += 16
+        YSize += 7
+    }
+    WinMove, %title%, , %XPos%, 0, %XSize%, %YSize%
+    return
 
 ^1::
-leftThirdPos()
-return
+    WinGetTitle, title, A 
+    XPos := 0
+    X3rdSize := (screenWidth - 1400) / 2
+    Y3rdSize := screenHeight
+    If (!normalSize(title)) {
+        XPos -= 8
+        X3rdSize += 16
+        Y3rdSize += 7
+    }
+    WinMove, %title%, , %XPos%, 0, %X3rdSize%, %Y3rdSize%
+    return
 
 ^2::
-middleThirdPos()
-return
+    WinGetTitle, title, A 
+    XPos := (screenWidth - 1400) / 2
+    X3rdSize := 1400
+    Y3rdSize := screenHeight
+    If (!normalSize(title)) {
+        XPos -= 8
+        X3rdSize += 16
+        Y3rdSize += 7
+    }
+    WinMove, %title%, , %XPos%, 0, %X3rdSize%, %Y3rdSize%
+    return
 
 ^3::
-rightThirdPos()
-return
+    WinGetTitle, title, A 
+    XPos := screenWidth - ((screenWidth - 1400) / 2)
+    X3rdSize := (screenWidth - 1400) / 2
+    Y3rdSize := screenHeight
+    If (!normalSize(title)) {
+        XPos -= 8
+        X3rdSize += 16
+        Y3rdSize += 7
+    }
+    WinMove, %title%, , %XPos%, 0, %X3rdSize%, %Y3rdSize%
+    return

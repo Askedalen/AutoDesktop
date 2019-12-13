@@ -1,8 +1,28 @@
 #SingleInstance, force
+
+; WINDOW HOOK
+#Persistent
+    windowMovingAdr := RegisterCallback("windowMoving", "F")
+    setEventHook(0xA, 0xB, 0, windowMovingAdr, 0, 0, 0)
+return
+
+windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwmsEventTime) {
+    ;if event = 10
+        ; Do something
+}
+
+setEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, idThread, dwFlags) {
+    DllCall("CoInitializeEx", "uint", 0, "uint", 0)
+    return DllCall("SetWinEventHook", "uint", eventMin, "uint", eventMax, "uint", hmodWinEventProc, "uint", lpfnWinEventProc, "uint", idProcess, "uint", idThread, "uint", dwFlags)
+    
+}
+
+; PLACEMENT FUNCTIONS
 SysGet, workArea, MonitorWorkArea
 screenWidth := workAreaRight
 screenHeight := workAreaBottom
 normalSize(title) {
+    ; Checks if the application is in the list of apps that act normal
     isNormal := false
     WinGetClass, winClass, %title%
     
@@ -93,6 +113,7 @@ rightThirdPos() {
     return
 }
 
+; HOTKEYS
 ^b::
 getWindowInfo()
 return
@@ -112,3 +133,9 @@ return
 ^3::
 rightThirdPos()
 return
+
+*~LButton::
+    MouseGetPos, mouseX, mouseY, window
+    
+    return
+    

@@ -103,71 +103,8 @@ middleScreenPos() {
     return
 }
 
-leftThirdPos() {
-    WinGetTitle, title, A 
-    xPos := 0
-    x3rdSize := (getScreenWidth() - 1400) / 2
-    y3rdSize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        x3rdSize += 16
-        y3rdSize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %x3rdSize%, %y3rdSize%
-    return
-}
-
-middleThirdPos() {
-    WinGetTitle, title, A 
-    xPos := (getScreenWidth() - 1400) / 2
-    x3rdSize := 1400
-    y3rdSize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        x3rdSize += 16
-        y3rdSize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %x3rdSize%, %y3rdSize%
-    return
-}
-
-rightThirdPos() {
-    WinGetTitle, title, A 
-    xPos := getScreenWidth() - ((getScreenWidth() - 1400) / 2)
-    x3rdSize := (getScreenWidth() - 1400) / 2
-    y3rdSize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        x3rdSize += 16
-        y3rdSize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %x3rdSize%, %y3rdSize%
-    return
-}
-
 ; HOTKEYS
-^b::
-getWindowInfo()
-return
-
-^f::
+^+a::
 middleScreenPos()
 return
-
-^1::
-leftThirdPos()
-return
-
-^2::
-middleThirdPos()
-return
-
-^3::
-rightThirdPos()
-return
-
-*~LButton::
-    MouseGetPos, mouseX, mouseY, window
-    
-    return
     

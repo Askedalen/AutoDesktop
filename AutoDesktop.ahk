@@ -5,19 +5,54 @@
     windowMovingAdr := RegisterCallback("windowMoving", "F")
     setEventHook(0xA, 0xB, 0, windowMovingAdr, 0, 0, 0)
     CoordMode, Mouse, Screen
+    currentGrid = 1
+    windowGrid := [[[0
+                    ,0
+                    ,(getScreenWidth() - 1400) / 2
+                    ,getScreenHeight()]
+                   ,[(getScreenWidth() - 1400) / 2
+                    ,0
+                    ,1400
+                    ,getScreenHeight()]
+                   ,[getScreenWidth() - ((getScreenWidth() - 1400) / 2)
+                    ,0
+                    ,(getScreenWidth() - 1400) / 2
+                    ,getScreenHeight()]]
+                  ,[[0
+                    ,0
+                    ,getScreenWidth() / 4
+                    ,getScreenHeight()]
+                   ,[getScreenWidth() / 4
+                    ,0
+                    ,getScreenWidth() / 2
+                    ,getScreenHeight()]
+                   ,[getScreenWidth() - (getScreenWidth() / 4)
+                    ,0
+                    ,getScreenWidth()/4
+                    ,getScreenHeight()]]]
 return
 
 windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwmsEventTime) {
     if (!GetKeyState("Control", "P")) {
         if (event = 10) {
             MouseGetPos, mouseX, mouseY, mouseOverWindow
-            if (hwind == mouseOverWindow) {
-                ; Visual grid comes here.
-            } 
+            grid := getGrid()
+            for i, cell in grid {
+                x := cell[1] + 10
+                y := cell[2] + 10
+                w := cell[3] - 20
+                h := cell[4] - 20
+                Gui, win%i%:New, +AlwaysOnTop +LastFound -Caption +Owner +Disabled
+                Gui, win%i%:Color, 7be098
+                WinSet, Transparent, 50
+                WinSet, ExStyle,^0x20
+                Gui, win%i%:Show, W%w% H%h% X%x% Y%y% NoActivate
+            }
         } else if (event = 11) {
             MouseGetPos, mouseX, mouseY
             grid := getGrid()
             for i, cell in grid {
+                Gui, win%i%:Destroy
                 if ((mouseX >= cell[1]) && (mouseX <= (cell[1] + cell[3]))){
                     moveWindow(cell)
                 }
@@ -33,9 +68,6 @@ setEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, 
 }
 
 ; PLACEMENT FUNCTIONS
-SysGet, workArea, MonitorWorkArea
-screenWidth := workAreaRight
-screenHeight := workAreaBottom
 normalSize(title) {
     ; Checks if the application is in the list of apps that act normal
     isNormal := false
@@ -51,13 +83,25 @@ normalSize(title) {
         isNormal := true
     } else if (InStr(title, "GitHub")) {
         isNormal := true
+    } else if (InStr(title, "Epic Games")) {
+        isNormal := true
     }
     return isNormal
 }
 
 getGrid() {
-    grid := [[0, 0, (getScreenWidth() - 1400) / 2, getScreenHeight()], [(getScreenWidth() - 1400) / 2, 0, 1400, getScreenHeight()], [getScreenWidth() - ((getScreenWidth() - 1400) / 2), 0, (getScreenWidth() - 1400) / 2, getScreenHeight()]]
-    return grid
+    global windowGrid
+    global currentGrid
+    return windowGrid[currentGrid]
+}
+
+swapGrid() {
+    global currentGrid
+    if (currentGrid == 1) {
+        currentGrid := 2
+    } else {
+        currentGrid := 1
+    }
 }
 
 getScreenWidth() {
@@ -73,7 +117,7 @@ getScreenHeight() {
 getWindowInfo() {
     WinGetTitle, title, A
     WinGetClass, winClass, A
-    MsgBox, The title is %title%, the winClass is %winClass%
+    MsgBox, Title: %title% `nClass: %winClass%
     return
 }
 
@@ -91,22 +135,13 @@ moveWindow(dimensions) {
     WinMove, %title%, , %x%, %y%, %w%, %h%
 }
 
-middleScreenPos() {
-    WinGetTitle, title, A
-    xPos := getScreenWidth() / 4
-    xSize := getScreenWidth() / 2
-    ySize := getScreenHeight()
-    If (!normalSize(title)) {
-        xPos -= 8
-        xSize += 16
-        ySize += 7
-    }
-    WinMove, %title%, , %xPos%, 0, %xSize%, %ySize%
-    return
-}
-
 ; HOTKEYS
 ^+a::
-middleScreenPos()
-return
+    swapGrid()
+    return
+
+^+F1::
+    getWindowInfo()
+    return
+
     

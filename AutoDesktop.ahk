@@ -7,14 +7,47 @@
 return
 
 windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwmsEventTime) {
-    ;if event = 10
-        ; Do something
+    if (event = 10) {
+        MouseGetPos, mouseX, mouseY, mouseOverWindow
+        if (hwind == mouseOverWindow) {
+            ; GUI OVERLAY
+            wLeft := ((getScreenWidth() - 1400) / 2) - 20
+            hLeft := getScreenHeight() - 20
+            Gui, grid1:New, +AlwaysOnTop +LastFound -Caption +Owner
+            Gui, Color, 44cfdb
+            WinSet, Transparent, 90
+            WinSet,ExStyle,^0x20
+            Gui, Show, W%wLeft% H%hLeft% X10 Y10
+
+            xMid := ((getScreenWidth() - 1400) / 2) + 10
+            wMid := 1400 - 20
+            hMid := getScreenHeight() - 20
+            Gui, grid2:New, +AlwaysOnTop +LastFound -Caption +Owner
+            Gui, Color, 44cfdb
+            WinSet, Transparent, 90
+            WinSet,ExStyle,^0x20
+            Gui, Show, W%wMid% H%hMid% X%xMid% Y10
+
+            xRight := (getScreenWidth() - ((getScreenWidth() - 1400) / 2)) + 10
+            wRight := ((getScreenWidth() - 1400) / 2) - 20
+            hRight := getScreenHeight() - 20
+            Gui, grid3:New, +AlwaysOnTop +LastFound -Caption +Owner
+            Gui, Color, 44cfdb
+            WinSet, Transparent, 90
+            WinSet,ExStyle,^0x20
+            Gui, Show, W%wRight% H%hRight% X%xRight% Y10
+            
+        } 
+    } else if (event = 11) {
+        Gui, grid1:Destroy
+        Gui, grid2:Destroy
+        Gui, grid3:Destroy
+    }
 }
 
 setEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, idThread, dwFlags) {
     DllCall("CoInitializeEx", "uint", 0, "uint", 0)
     return DllCall("SetWinEventHook", "uint", eventMin, "uint", eventMax, "uint", hmodWinEventProc, "uint", lpfnWinEventProc, "uint", idProcess, "uint", idThread, "uint", dwFlags)
-    
 }
 
 ; PLACEMENT FUNCTIONS

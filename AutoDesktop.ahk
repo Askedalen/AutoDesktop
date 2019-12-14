@@ -8,17 +8,19 @@
 return
 
 windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwmsEventTime) {
-    if (event = 10) {
-        MouseGetPos, mouseX, mouseY, mouseOverWindow
-        if (hwind == mouseOverWindow) {
-            ; Visual grid comes here.
-        } 
-    } else if (event = 11) {
-        MouseGetPos, mouseX, mouseY
-        grid := getGrid()
-        for i, cell in grid {
-            if ((mouseX >= cell[1]) && (mouseX <= (cell[1] + cell[3]))){
-                moveWindow(cell)
+    if (!GetKeyState("Control", "P")) {
+        if (event = 10) {
+            MouseGetPos, mouseX, mouseY, mouseOverWindow
+            if (hwind == mouseOverWindow) {
+                ; Visual grid comes here.
+            } 
+        } else if (event = 11) {
+            MouseGetPos, mouseX, mouseY
+            grid := getGrid()
+            for i, cell in grid {
+                if ((mouseX >= cell[1]) && (mouseX <= (cell[1] + cell[3]))){
+                    moveWindow(cell)
+                }
             }
         }
     }

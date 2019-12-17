@@ -41,38 +41,66 @@
                     ,0
                     ,screenWidth / 2
                     ,screenHeight]]]
+    
 return
 
 windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwmsEventTime) {
-    if (!GetKeyState("Control", "P")) {
+    static windowDrag := false
         if (event = 0xA) {
-            MouseGetPos, mouseX, mouseY, mouseOverWindow
             grid := getGrid()
-            for i, cell in grid {
-                x := cell[1] + 10
-                y := cell[2] + 10
-                w := cell[3] - 20
-                h := cell[4] - 20
-                Gui, win%i%:New, +AlwaysOnTop +LastFound -Caption +Owner +Disabled
-                Gui, win%i%:Color, 7be098
-                WinSet, Transparent, 50
-                WinSet, ExStyle,^0x20
-                Gui, win%i%:Show, W%w% H%h% X%x% Y%y% NoActivate
+            windowDrag := true
+            if (!GetKeyState("Control", "P")) { 
+                createGui()
+            }
+
+            mouseOverGrid := []
+            while (windowDrag) {
+                if (!GetKeyState("Control", "P")) {
+                    MouseGetPos, mouseX, mouseY
+                    for i, cell in grid {
+                        if ((mouseX >= cell[1]) 
+                        && (mouseX <= (cell[1] + cell[3]))
+                        && (mouseY >= cell[2]) 
+                        && (mouseY <= (cell[2] + cell[4]))) {
+                            Gui, win%i%: +LastFound
+                            WinSet, Transparent, 200
+                            mouseOverGrid[i] := true
+                        } else if (mouseOverGrid[i]) {
+                            Gui, win%i%: +LastFound
+                            WinSet, Transparent, 90
+                            mouseOverGrid[i] := false
+                        }
+                    }
+                    sleep 10
+                    continue
+                }
+
+                removeGui()
+                while (GetKeyState("Control", "P")) { 
+                    sleep 10
+                    if (!GetKeyState("LButton", "P")) {
+                        break 2
+                    }
+                }
+                createGui()
             }
         } else if (event = 0xB) {
-            MouseGetPos, mouseX, mouseY
-            grid := getGrid()
-            for i, cell in grid {
-                Gui, win%i%:Destroy
-                if ((mouseX >= cell[1]) 
-                 && (mouseX <= (cell[1] + cell[3]))
-                 && (mouseY >= cell[2]) 
-                 && (mouseY <= (cell[2] + cell[4]))){
-                    moveWindow(cell, hwind)
+            windowDrag := false
+            if (!GetKeyState("Control", "P")) {
+                removeGui()
+
+                MouseGetPos, mouseX, mouseY
+                grid := getGrid()
+                for i, cell in grid {
+                    if ((mouseX >= cell[1]) 
+                    && (mouseX <= (cell[1] + cell[3]))
+                    && (mouseY >= cell[2]) 
+                    && (mouseY <= (cell[2] + cell[4]))){
+                        moveWindow(cell, hwind)
+                    }
                 }
             }
         }
-    }
     return
 }
 
@@ -86,6 +114,31 @@ setEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, 
                   ,"uint", idProcess
                   ,"uint", idThread
                   ,"uint", dwFlags)
+}
+
+; Add/remove GUI
+createGui() {
+    grid := getGrid()
+    for i, cell in grid {
+        x := cell[1] + 10
+        y := cell[2] + 10
+        w := cell[3] - 20
+        h := cell[4] - 20
+        Gui, win%i%:New, +AlwaysOnTop +LastFound -Caption +Owner +Disabled
+        Gui, win%i%:Color, 000000
+        WinSet, Transparent, 90
+        WinSet, ExStyle,^0x20
+        Gui, win%i%:Show, W%w% H%h% X%x% Y%y% NoActivate
+    }
+    return
+}
+
+removeGui() {
+    grid := getGrid()
+    for i, cell in grid {
+        Gui, win%i%:Destroy
+    }
+    return
 }
 
 ; PLACEMENT FUNCTIONS
@@ -106,6 +159,8 @@ normalSize(hwind) {
     } else if (InStr(title, "GitHub")) {
         isNormal := true
     } else if (InStr(title, "Epic Games")) {
+        isNormal := true
+    } else if (InStr(title, "Discord")) {
         isNormal := true
     }
     return isNormal
@@ -193,5 +248,4 @@ moveAllOpenWindows() {
 ^+F1::
     getWindowInfo()
     return
-
     

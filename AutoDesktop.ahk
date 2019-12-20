@@ -8,18 +8,18 @@
     DetectHiddenWindows, Off
     screenWidth := getScreenWidth()
     screenHeight := getScreenHeight()
-    currentGrid := 1
+    currentGrid := 2
     windowGrid := [[[0
                     ,0
-                    ,(screenWidth - 1400) / 2
+                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
                     ,screenHeight]
-                   ,[(screenWidth - 1400) / 2
+                   ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
                     ,0
-                    ,1400
+                    ,((screenWidth / 3840) * 1400)
                     ,screenHeight]
-                   ,[screenWidth - ((screenWidth - 1400) / 2)
+                   ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
                     ,0
-                    ,(screenWidth - 1400) / 2
+                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
                     ,screenHeight]]
                   ,[[0
                     ,0
@@ -40,27 +40,56 @@
                    ,[screenWidth / 2
                     ,0
                     ,screenWidth / 2
+                    ,screenHeight]]
+                  ,[[0
+                    ,0
+                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                    ,screenHeight / 2]
+                   ,[0
+                    ,screenHeight / 2
+                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                    ,screenHeight / 2]
+                   ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                    ,0
+                    ,((screenWidth / 3840) * 1400)
+                    ,screenHeight]
+                   ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
+                    ,0
+                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                    ,screenHeight]]
+                  ,[[0
+                    ,0
+                    ,screenWidth
                     ,screenHeight]]]
-    
+    deactivatedWindows := Array()
 return
 
 windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwmsEventTime) {
-    static windowDrag := false
+    global deactivatedWindows
+    deactivated := false
+    WinGet, hwnd, ID, A
+    for i, window in deactivatedWindows {
+        if (hwnd == window) {
+            deactivated := true
+        }
+    }
+    if (!deactivated) {
+        static windowDrag := false
         if (event = 0xA) {
-            grid := getGrid()
             windowDrag := true
             if (!GetKeyState("Control", "P")) { 
                 createGui()
             }
 
+            grid := getGrid()
             mouseOverGrid := []
             while (windowDrag) {
                 if (!GetKeyState("Control", "P")) {
                     MouseGetPos, mouseX, mouseY
                     for i, cell in grid {
-                        if ((mouseX >= cell[1]) 
+                        if ((mouseX >=  cell[1]) 
                         && (mouseX <= (cell[1] + cell[3]))
-                        && (mouseY >= cell[2]) 
+                        && (mouseY >=  cell[2]) 
                         && (mouseY <= (cell[2] + cell[4]))) {
                             Gui, win%i%: +LastFound
                             WinSet, Transparent, 200
@@ -88,19 +117,19 @@ windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwms
             windowDrag := false
             if (!GetKeyState("Control", "P")) {
                 removeGui()
-
                 MouseGetPos, mouseX, mouseY
                 grid := getGrid()
                 for i, cell in grid {
-                    if ((mouseX >= cell[1]) 
+                    if ((mouseX >=  cell[1]) 
                     && (mouseX <= (cell[1] + cell[3]))
-                    && (mouseY >= cell[2]) 
+                    && (mouseY >=  cell[2]) 
                     && (mouseY <= (cell[2] + cell[4]))){
                         moveWindow(cell, hwind)
                     }
                 }
             }
         }
+    }
     return
 }
 
@@ -116,7 +145,7 @@ setEventHook(eventMin, eventMax, hmodWinEventProc, lpfnWinEventProc, idProcess, 
                   ,"uint", dwFlags)
 }
 
-; Add/remove GUI
+; Add/remove GUI overlay
 createGui() {
     grid := getGrid()
     for i, cell in grid {
@@ -137,6 +166,23 @@ removeGui() {
     grid := getGrid()
     for i, cell in grid {
         Gui, win%i%:Destroy
+    }
+    return
+}
+
+deactivateWindow() {
+    global deactivatedWindows
+    foundAt := 0
+    WinGet, hwnd, ID, A
+    for i, window in deactivatedWindows {
+        if (hwnd == window) {
+            foundAt := i
+        }
+    }
+    if (!foundAt) {
+        deactivatedWindows.Push(hwnd)
+    } else {
+        deactivatedWindows.RemoveAt(foundAt)
     }
     return
 }
@@ -162,6 +208,8 @@ normalSize(hwind) {
         isNormal := true
     } else if (InStr(title, "Discord")) {
         isNormal := true
+    } else if (processName == "Steam.exe") {
+        isNormal := true
     }
     return isNormal
 }
@@ -172,15 +220,9 @@ getGrid() {
     return windowGrid[currentGrid]
 }
 
-swapGrid() {
+swapGrid(gridNumber) {
     global currentGrid
-    if (currentGrid == 1) {
-        currentGrid := 2
-    } else if (currentGrid == 2) {
-        currentGrid := 3
-    } else {
-        currentGrid := 1
-    }
+    currentGrid := gridNumber
     moveAllOpenWindows()
     return
 }
@@ -221,19 +263,30 @@ moveWindow(dimensions, hwind) {
 }
 
 moveAllOpenWindows() {
+    global deactivatedWindows
     WinGet, openWindows, list
     grid := getGrid()
     Loop %openWindows% {
         id := openWindows%A_Index%
-        WinGetPos, x, y, w, h, ahk_id %id%
-        winX := x + (w / 2)
-        winY := y + (h / 2)
-        for i, cell in grid {
-            if ((winX >= cell[1]) 
-             && (winX <= (cell[1] + cell[3]))
-             && (winY >= cell[2]) 
-             && (winY <= (cell[2] + cell[4]))){
-                moveWindow(cell, id)
+        deactivated := false
+        WinGet, hwnd, ID, A
+        for i, window in deactivatedWindows {
+            if (id == window) {
+                deactivated := true
+            }
+        }
+        if (!deactivated) {
+            id := openWindows%A_Index%
+            WinGetPos, x, y, w, h, ahk_id %id%
+            winX := x + (w / 2) + 1
+            winY := y + (h / 2) + 1
+            for i, cell in grid {
+                if ((winX >= cell[1]) 
+                && (winX <= (cell[1] + cell[3]))
+                && (winY >= cell[2]) 
+                && (winY <= (cell[2] + cell[4]))){
+                    moveWindow(cell, id)
+                }
             }
         }
     }
@@ -241,8 +294,28 @@ moveAllOpenWindows() {
 }
 
 ; HOTKEYS
-^+a::
-    swapGrid()
+!1::
+    deactivateWindow()
+    return
+
+!2::
+    swapGrid(5)
+    return
+
+!3::
+    swapGrid(3)
+    return
+
+!4::
+    swapGrid(2)
+    return
+
+!5::
+    swapGrid(1)
+    return
+
+!6::
+    swapGrid(4)
     return
 
 ^+F1::

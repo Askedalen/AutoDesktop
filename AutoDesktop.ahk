@@ -210,6 +210,14 @@ normalSize(hwind) {
         isNormal := true
     } else if (processName == "Steam.exe") {
         isNormal := true
+    } else if (processName == "WINWORD.EXE") {
+        isNormal := true
+    } else if (InStr(title, "Microsoft Teams")) {
+        isNormal := true
+    } else if (InStr(title, "Excel")) {
+        isNormal := true
+    } else if (InStr(title, "Outlook")) {
+        isNormal := true
     }
     return isNormal
 }

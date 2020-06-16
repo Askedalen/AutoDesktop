@@ -1,66 +1,144 @@
 #SingleInstance, force
 
-; WINDOW HOOK
 #Persistent
+    ; Setup
     windowMovingAdr := RegisterCallback("windowMoving", "F")
     setEventHook(0xA, 0xB, 0, windowMovingAdr, 0, 0, 0)
     CoordMode, Mouse, Screen
     DetectHiddenWindows, Off
+    ; Get screen dimensions
     screenWidth := getScreenWidth()
     screenHeight := getScreenHeight()
-    currentGrid := 2
-    windowGrid := [[[0
-                    ,0
-                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                    ,screenHeight]
-                   ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                    ,0
-                    ,((screenWidth / 3840) * 1400)
-                    ,screenHeight]
-                   ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
-                    ,0
-                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                    ,screenHeight]]
-                  ,[[0
-                    ,0
-                    ,screenWidth / 4
-                    ,screenHeight]
-                   ,[screenWidth / 4
-                    ,0
-                    ,screenWidth / 2
-                    ,screenHeight]
-                   ,[screenWidth - (screenWidth / 4)
-                    ,0
-                    ,screenWidth/4
-                    ,screenHeight]]
-                  ,[[0
-                    ,0
-                    ,screenWidth / 2
-                    ,screenHeight]
-                   ,[screenWidth / 2
-                    ,0
-                    ,screenWidth / 2
-                    ,screenHeight]]
-                  ,[[0
-                    ,0
-                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                    ,screenHeight / 2]
-                   ,[0
-                    ,screenHeight / 2
-                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                    ,screenHeight / 2]
-                   ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                    ,0
-                    ,((screenWidth / 3840) * 1400)
-                    ,screenHeight]
-                   ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
-                    ,0
-                    ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                    ,screenHeight]]
-                  ,[[0
-                    ,0
-                    ,screenWidth
-                    ,screenHeight]]]
+    ; Exit if small screen
+    if (screenWidth < 2000) {
+        ExitApp
+    }
+    ; Default grid
+    currentGrid := 3
+    ; Create grid array
+    windowGrid := Array()
+
+    ; Open file
+    gridFile := FileOpen("grids.txt", "r")
+    if (gridFile) {
+        ; Read from file if it exists
+        line := gridFile.ReadLine()
+        ; For each grid (line)
+        while (line != "") {
+            if (InStr(line, "#")) {
+                line := gridFile.ReadLine()
+                continue
+            }
+            boxes := StrSplit(line, ";")
+            grid := Array()
+            ; For each box (seperated by semicolon)
+            for i, boxString in boxes {
+                values := StrSplit(boxString, " ")
+                box := Array()
+                ; For each value (seperated by space)
+                for j, value in values {
+                    ; Push the value into box
+                    if (value != "") {
+                        box.Push(Trim(value, " `n"))
+                    }
+                }
+                ; Push the boxes into grid
+                grid.push(box)
+            }
+            ; Push the boxes into windowGrid
+            windowGrid.push(grid)
+            ; Get next line
+            line := gridFile.ReadLine()
+        }
+        gridFile.Close()
+    } else { ; Else write default grid to file
+        ; Close read file
+        gridFile.Close()
+        ; Open write
+        gridFile := FileOpen("grids.txt", "w")
+        ; Write comments
+        gridFile.WriteLine("#   First cell          `; Second cell         `; ...")
+        gridFile.WriteLine("#   X    Y    W    H    `; X    Y    W    H    `; ...")
+        ; Define the grids
+        windowGrid := [[[0
+                        ,0
+                        ,screenWidth
+                        ,screenHeight]]
+                      ,[[0
+                        ,0
+                        ,screenWidth / 2
+                        ,screenHeight]
+                       ,[screenWidth / 2
+                        ,0
+                        ,screenWidth / 2
+                        ,screenHeight]]
+                      ,[[0
+                        ,0
+                        ,screenWidth / 4
+                        ,screenHeight]
+                       ,[screenWidth / 4
+                        ,0
+                        ,screenWidth / 2
+                        ,screenHeight]
+                       ,[screenWidth - (screenWidth / 4)
+                        ,0
+                        ,screenWidth/4
+                        ,screenHeight]]
+                      ,[[0
+                        ,0
+                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                        ,screenHeight]
+                       ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                        ,0
+                        ,((screenWidth / 3840) * 1400)
+                        ,screenHeight]
+                       ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
+                         ,0
+                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                        ,screenHeight]]
+                      ,[[0
+                        ,0
+                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                        ,screenHeight / 2]
+                       ,[0
+                        ,screenHeight / 2
+                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                        ,screenHeight / 2]
+                       ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                        ,0
+                        ,((screenWidth / 3840) * 1400)
+                        ,screenHeight]
+                       ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
+                        ,0
+                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
+                        ,screenHeight]]]
+
+        for i, grid in windowGrid {
+            line := ""
+            for j, box in grid {
+                for h, value in box {
+                    ; Formatting
+                    if (j == 1 && h == 1) {
+                        line .= "    "
+                    }
+                    ; Format and insert values
+                    line .= Floor(value) . (value < 10 
+                                            ? "    " 
+                                            : (value < 100 
+                                               ? "   " 
+                                               : (value < 1000 
+                                                  ? "  " 
+                                                  : " "))) 
+                                         . (j < grid.MaxIndex() && h >= box.MaxIndex()
+                                               ? "`; " 
+                                               : "")
+                }
+            }
+            gridFile.WriteLine(line)
+        }
+        gridFile.Close()
+    }
+
     deactivatedWindows := Array()
 return
 
@@ -153,6 +231,7 @@ createGui() {
         y := cell[2] + 10
         w := cell[3] - 20
         h := cell[4] - 20
+
         Gui, win%i%:New, +AlwaysOnTop +LastFound -Caption +Owner +Disabled
         Gui, win%i%:Color, 000000
         WinSet, Transparent, 90
@@ -307,23 +386,23 @@ moveAllOpenWindows() {
     return
 
 !2::
-    swapGrid(5)
-    return
-
-!3::
-    swapGrid(3)
-    return
-
-!4::
-    swapGrid(2)
-    return
-
-!5::
     swapGrid(1)
     return
 
-!6::
+!3::
+    swapGrid(2)
+    return
+
+!4::
+    swapGrid(3)
+    return
+
+!5::
     swapGrid(4)
+    return
+
+!6::
+    swapGrid(5)
     return
 
 ^+F1::

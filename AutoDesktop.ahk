@@ -1,145 +1,24 @@
 #SingleInstance, force
 
+#Include getConfig.ahk
+
 #Persistent
+    ; Exit if screen is smaller than 2000px
+    if (getScreenWidth() < 2000) {
+        ExitApp
+    }
+
+    ; Global variables
+    currentGrid := 1
+    grids := []
+    deactivatedWindows := []
+
     ; Setup
     windowMovingAdr := RegisterCallback("windowMoving", "F")
     setEventHook(0xA, 0xB, 0, windowMovingAdr, 0, 0, 0)
     CoordMode, Mouse, Screen
     DetectHiddenWindows, Off
-    ; Get screen dimensions
-    screenWidth := getScreenWidth()
-    screenHeight := getScreenHeight()
-    ; Exit if small screen
-    if (screenWidth < 2000) {
-        ExitApp
-    }
-    ; Default grid
-    currentGrid := 3
-    ; Create grid array
-    windowGrid := Array()
-
-    ; Open file
-    gridFile := FileOpen("grids.txt", "r")
-    if (gridFile) {
-        ; Read from file if it exists
-        line := gridFile.ReadLine()
-        ; For each grid (line)
-        while (line != "") {
-            if (InStr(line, "#")) {
-                line := gridFile.ReadLine()
-                continue
-            }
-            boxes := StrSplit(line, ";")
-            grid := Array()
-            ; For each box (seperated by semicolon)
-            for i, boxString in boxes {
-                values := StrSplit(boxString, " ")
-                box := Array()
-                ; For each value (seperated by space)
-                for j, value in values {
-                    ; Push the value into box
-                    if (value != "") {
-                        box.Push(Trim(value, " `n"))
-                    }
-                }
-                ; Push the boxes into grid
-                grid.push(box)
-            }
-            ; Push the boxes into windowGrid
-            windowGrid.push(grid)
-            ; Get next line
-            line := gridFile.ReadLine()
-        }
-        gridFile.Close()
-    } else { ; Else write default grid to file
-        ; Close read file
-        gridFile.Close()
-        ; Open write
-        gridFile := FileOpen("grids.txt", "w")
-        ; Write comments
-        gridFile.WriteLine("#   First cell          `; Second cell         `; ...")
-        gridFile.WriteLine("#   X    Y    W    H    `; X    Y    W    H    `; ...")
-        ; Define the grids
-        windowGrid := [[[0
-                        ,0
-                        ,screenWidth
-                        ,screenHeight]]
-                      ,[[0
-                        ,0
-                        ,screenWidth / 2
-                        ,screenHeight]
-                       ,[screenWidth / 2
-                        ,0
-                        ,screenWidth / 2
-                        ,screenHeight]]
-                      ,[[0
-                        ,0
-                        ,screenWidth / 4
-                        ,screenHeight]
-                       ,[screenWidth / 4
-                        ,0
-                        ,screenWidth / 2
-                        ,screenHeight]
-                       ,[screenWidth - (screenWidth / 4)
-                        ,0
-                        ,screenWidth/4
-                        ,screenHeight]]
-                      ,[[0
-                        ,0
-                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                        ,screenHeight]
-                       ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                        ,0
-                        ,((screenWidth / 3840) * 1400)
-                        ,screenHeight]
-                       ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
-                         ,0
-                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                        ,screenHeight]]
-                      ,[[0
-                        ,0
-                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                        ,screenHeight / 2]
-                       ,[0
-                        ,screenHeight / 2
-                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                        ,screenHeight / 2]
-                       ,[(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                        ,0
-                        ,((screenWidth / 3840) * 1400)
-                        ,screenHeight]
-                       ,[screenWidth - ((screenWidth - ((screenWidth / 3840) * 1400)) / 2)
-                        ,0
-                        ,(screenWidth - ((screenWidth / 3840) * 1400)) / 2
-                        ,screenHeight]]]
-
-        for i, grid in windowGrid {
-            line := ""
-            for j, box in grid {
-                for h, value in box {
-                    ; Formatting
-                    if (j == 1 && h == 1) {
-                        line .= "    "
-                    }
-                    ; Format and insert values
-                    line .= Floor(value) . (value < 10 
-                                            ? "    " 
-                                            : (value < 100 
-                                               ? "   " 
-                                               : (value < 1000 
-                                                  ? "  " 
-                                                  : " "))) 
-                                         . (j < grid.MaxIndex() && h >= box.MaxIndex()
-                                               ? "`; " 
-                                               : "")
-                }
-            }
-            gridFile.WriteLine(line)
-        }
-        gridFile.Close()
-    }
-
-    deactivatedWindows := Array()
+    getConfig()
 return
 
 windowMoving(hWinEventHook, event, hwind, idObject, idChild, dwEventThread, dwmsEventTime) {
@@ -302,9 +181,9 @@ normalSize(hwind) {
 }
 
 getGrid() {
-    global windowGrid
+    global grids
     global currentGrid
-    return windowGrid[currentGrid]
+    return grids[currentGrid]
 }
 
 swapGrid(gridNumber) {
@@ -312,16 +191,6 @@ swapGrid(gridNumber) {
     currentGrid := gridNumber
     moveAllOpenWindows()
     return
-}
-
-getScreenWidth() {
-    SysGet, workArea, MonitorWorkArea
-    return workAreaRight
-}
-
-getScreenHeight() {
-    SysGet, workArea, MonitorWorkArea
-    return workAreaBottom
 }
 
 getWindowInfo() {

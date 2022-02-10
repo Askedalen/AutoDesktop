@@ -1,5 +1,6 @@
 # AutoDesktop
-Desktop manager.
+This is a desktop window manager I created using AutoHotKey in order to use a superwide screen efficiently on Windows. I have since started using [PowerToys](https://github.com/microsoft/PowerToys) which provides the same functionality. This script is discontinued because of security concerns regarding AutoHotKey, and I recommend using PowerToys' FancyZones instead. 
+
 This script splits your screen, allowing you to snap windows to different grids. 
 Note: The script uses the SetWinEventHook function in Windows, which does not distinguish between moving a window and resizing it, so you cannot manually resize windows without holding  `Ctrl`. 
 
